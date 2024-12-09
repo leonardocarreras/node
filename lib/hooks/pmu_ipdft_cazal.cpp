@@ -1,7 +1,7 @@
 /* ipDFT PMU hook with Cazal's method
  *
- * Author:
- * SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+ * Author: Leonardo Carreras <leonardo.carreras@eonerc.rwth-aachen.de>
+ * SPDX-FileCopyrightText: 2024 Institute for Automation of Complex Power Systems, RWTH Aachen University
  * SPDX-License-Identifier: Apache-2.0
  */
 
