@@ -92,55 +92,71 @@ public:
                         "Estimation range cannot be less or equal to 0");
   }
 
-  PmuHook::Phasor estimatePhasor(dsp::CosineWindow<double> *window,
-                                 PmuHook::Phasor lastPhasor) {
+    PmuHook::Phasor estimatePhasor(dsp::CosineWindow<double> *window,
+                               PmuHook::Phasor lastPhasor) {
     PmuHook::Phasor phasor = {0};
 
     // Apply Hanning window and calculate DFT using precomputed Twiddle Factors
     for (unsigned i = 0; i < frequencyCount; i++) {
-      wXkr[i] = 0.0;
-      wXki[i] = 0.0;
-      for (unsigned j = 0; j < windowSize; j++) {
-        double windowedValue = hanning[j] * (*window)[j];
-        wXkr[i] += windowedValue * twiddleReal[i][j];
-        wXki[i] += windowedValue * twiddleImag[i][j];
-      }
-      wXka[i] = std::sqrt(wXkr[i] * wXkr[i] + wXki[i] * wXki[i]);
+        wXkr[i] = 0.0;
+        wXki[i] = 0.0;
+        for (unsigned j = 0; j < windowSize; j++) {
+            double windowedValue = hanning[j] * (*window)[j];
+            wXkr[i] += windowedValue * twiddleReal[i][j];
+            wXki[i] += windowedValue * twiddleImag[i][j];
+        }
     }
+
+    // Smoothing operation in the frequency domain
+    std::vector<double> smoothedWkr(frequencyCount, 0.0);
+    std::vector<double> smoothedWki(frequencyCount, 0.0);
+    std::vector<double> smoothedWka(frequencyCount, 0.0);
+
+    for (unsigned i = 1; i < frequencyCount - 1; i++) { // Avoid boundary issues
+        smoothedWkr[i] = -0.25 * wXkr[i - 1] + 0.5 * wXkr[i] - 0.25 * wXkr[i + 1];
+        smoothedWki[i] = -0.25 * wXki[i - 1] + 0.5 * wXki[i] - 0.25 * wXki[i + 1];
+        smoothedWka[i] = std::sqrt(smoothedWkr[i] * smoothedWkr[i] +
+                                   smoothedWki[i] * smoothedWki[i]);
+    }
+
+    // Replace original arrays with smoothed results
+    std::swap(wXkr, smoothedWkr);
+    std::swap(wXki, smoothedWki);
+    std::swap(wXka, smoothedWka);
 
     // Find maximum frequency bin
     unsigned maxBin = 0;
     double absAmplitude = 0.0;
     for (unsigned i = 0; i < frequencyCount; i++) {
-      if (absAmplitude < wXka[i]) {
-        absAmplitude = wXka[i];
-        maxBin = i;
-      }
+        if (absAmplitude < wXka[i]) {
+            absAmplitude = wXka[i];
+            maxBin = i;
+        }
     }
 
     // Handle boundary conditions
     if (maxBin == 0 || maxBin == (frequencyCount - 1)) {
-      logger->warn("Maximum frequency bin lies on window boundary. Using "
-                   "non-estimated results!");
-      return lastPhasor; // Return previous phasor to avoid invalid results
+        logger->warn("Maximum frequency bin lies on window boundary. Using "
+                     "non-estimated results!");
+        return lastPhasor; // Return previous phasor to avoid invalid results
     }
 
     // Interpolated DFT (IpDFT) Calculations
     double delta = 0.0;
     if (wXka[maxBin + 1] > wXka[maxBin - 1])
-      delta = 1.0 * (2.0 * wXka[maxBin + 1] - wXka[maxBin]) /
-              (wXka[maxBin] + wXka[maxBin + 1]);
+        delta = 1.0 * (2.0 * wXka[maxBin + 1] - wXka[maxBin]) /
+                (wXka[maxBin] + wXka[maxBin + 1]);
     else
-      delta = -1.0 * (2.0 * wXka[maxBin - 1] - wXka[maxBin]) /
-              (wXka[maxBin] + wXka[maxBin - 1]);
+        delta = -1.0 * (2.0 * wXka[maxBin - 1] - wXka[maxBin]) /
+                (wXka[maxBin] + wXka[maxBin - 1]);
 
     // Amplitude Estimation
     if (std::abs(delta) < DELTA_INF_COMPARISON_THRESHOLD)
-      phasor.amplitude = 2.0 * wXka[maxBin];
+        phasor.amplitude = 2.0 * wXka[maxBin];
     else
-      phasor.amplitude = 2.0 * wXka[maxBin] *
-                         std::abs((M_PI * delta * (1 - delta * delta)) /
-                                  std::sin(M_PI * delta));
+        phasor.amplitude = 2.0 * wXka[maxBin] *
+                           std::abs((M_PI * delta * (1 - delta * delta)) /
+                                    std::sin(M_PI * delta));
 
     // Frequency Estimation
     phasor.frequency = nominalFreq +
@@ -153,11 +169,12 @@ public:
     phasor.rocof = (phasor.frequency - lastPhasor.frequency) * phasorRate;
 
     if (lastPhasor.frequency != 0)
-      phasor.valid = Status::VALID;
+        phasor.valid = Status::VALID;
 
     return phasor;
-  }
+    }
 };
+
 
 // Register hook
 static char n[] = "ip-dft-pmu";
