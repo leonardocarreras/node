@@ -155,7 +155,7 @@ fi
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.13.0" && \
     should_build "rabbitmq" "for the AMQP node and VILLAScontroller"; then
-    git clone ${GIT_OPTS} --branch v0.11.0 https://github.com/alanxz/rabbitmq-c.git
+    git clone ${GIT_OPTS} --branch v0.15.0 https://github.com/alanxz/rabbitmq-c.git
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
     cmake ${CMAKE_OPTS} ..
@@ -354,7 +354,7 @@ fi
 # Build & Install redis++
 if ! pkg-config "redis++ >= 1.2.3" && \
     should_build "redis++" "for the redis node-type"; then
-    git clone ${GIT_OPTS} --branch 1.3.7 https://github.com/sewenew/redis-plus-plus.git
+    git clone ${GIT_OPTS} --branch 1.3.13 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
 
@@ -451,7 +451,7 @@ fi
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "libdatachannel" "for the webrtc node-type"; then
-    git clone ${GIT_OPTS} --recursive --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel.git
+    git clone ${GIT_OPTS} --recursive --branch v0.22.4 https://github.com/paullouisageneau/libdatachannel.git
     mkdir -p libdatachannel/build
     pushd libdatachannel/build
 
