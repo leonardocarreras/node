@@ -177,8 +177,8 @@ public:
 
 
 // Register hook
-static char n[] = "ip-dft-pmu";
-static char d[] = "This hook calculates a phasor based on ipDFT";
+static char n[] = "ip_dft_pmu_cazal";
+static char d[] = "This hook calculates a phasor based on ipDFT with Cazal approach";
 static HookPlugin<IpDftPmuCazalHook, n, d,
                   (int)Hook::Flags::NODE_READ | (int)Hook::Flags::NODE_WRITE |
                       (int)Hook::Flags::PATH>
