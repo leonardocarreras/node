@@ -18,16 +18,23 @@ using namespace villas::kernel;
 TestSuite(kernel, .description = "Kernel features");
 
 #if defined(__x86_64__) || defined(__i386__)
-#define PAGESIZE (1 << 12)
-#define CACHELINESIZE 64
+    #define PAGESIZE (1 << 12)
+    #define CACHELINESIZE 64
 
-#if defined(__x86_64__)
-#define HUGEPAGESIZE (1 << 21)
-#elif defined(__i386__)
-#define HUGEPAGESIZE (1 << 22)
-#endif
+    #if defined(__x86_64__)
+        #define HUGEPAGESIZE (1 << 21)
+    #elif defined(__i386__)
+        #define HUGEPAGESIZE (1 << 22)
+    #endif
+
+#elif defined(__aarch64__)
+    // ARM-specific definitions
+    #define PAGESIZE (1 << 12)  // Same as x86 (4KB pages)
+    #define CACHELINESIZE 64    // Common value for ARM
+    #define HUGEPAGESIZE (1 << 21)  // 2MB huge pages (adjust if needed)
+
 #else
-#error "Unsupported architecture"
+    #error "Unsupported architecture"
 #endif
 
 // This test is not portable, but we currently support x86 only
