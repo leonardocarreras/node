@@ -62,8 +62,17 @@ uint64_t thread_get_id() {
   return -1;
 }
 
-// Sleep, do nothing
-__attribute__((always_inline)) static inline void nop() { __asm__("rep nop;"); }
+// Sleep, do nothing (Architecture-Specific Implementation)
+__attribute__((always_inline)) static inline void nop() {
+#if defined(__x86_64__) || defined(__i386__)
+    __asm__ volatile("rep nop");  // x86 pause instruction for spin loops
+#elif defined(__aarch64__)
+    __asm__ volatile("yield");    // ARM equivalent of rep nop
+#else
+    #error "Unsupported architecture"
+#endif
+}
+
 
 static void *producer(void *ctx) {
   int ret;
