@@ -155,7 +155,7 @@ fi
 # Build & Install rabbitmq-c
 if ! pkg-config "librabbitmq >= 0.13.0" && \
     should_build "rabbitmq" "for the AMQP node and VILLAScontroller"; then
-    git clone ${GIT_OPTS} --branch v0.11.0 https://github.com/alanxz/rabbitmq-c.git
+    git clone ${GIT_OPTS} --branch v0.15.0 https://github.com/alanxz/rabbitmq-c.git
     mkdir -p rabbitmq-c/build
     pushd rabbitmq-c/build
     cmake ${CMAKE_OPTS} ..
@@ -354,7 +354,7 @@ fi
 # Build & Install redis++
 if ! pkg-config "redis++ >= 1.2.3" && \
     should_build "redis++" "for the redis node-type"; then
-    git clone ${GIT_OPTS} --branch 1.3.7 https://github.com/sewenew/redis-plus-plus.git
+    git clone ${GIT_OPTS} --branch 1.3.13 https://github.com/sewenew/redis-plus-plus.git
     mkdir -p redis-plus-plus/build
     pushd redis-plus-plus/build
 
@@ -414,7 +414,7 @@ fi
 # Build & Install libnice
 if ! pkg-config "nice >= 0.1.16" && \
     should_build "libnice" "for the webrtc node-type"; then
-    git clone ${GIT_OPTS} --branch 0.1.21 https://gitlab.freedesktop.org/libnice/libnice.git
+    git clone ${GIT_OPTS}  https://gitlab.freedesktop.org/libnice/libnice.git
     mkdir -p libnice/build
     pushd libnice
 
@@ -426,12 +426,13 @@ if ! pkg-config "nice >= 0.1.16" && \
             . venv/bin/activate
 
             # Note: meson 0.61.5 is the latest version which supports the CMake version on the target
-            pip3 install meson==0.61.5
+            pip3 install meson
+            python3 -m pip install --upgrade pip setuptools
         fi
 
         # Install ninja
         if ! command -v ninja; then
-            wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+            wget https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-linux.zip
             unzip ninja-linux.zip
             export PATH=${PATH}:.
         fi
@@ -451,7 +452,7 @@ fi
 # Build & Install libdatachannel
 if ! cmake --find-package -DNAME=LibDataChannel -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>/dev/null && \
     should_build "libdatachannel" "for the webrtc node-type"; then
-    git clone ${GIT_OPTS} --recursive --branch v0.18.4 https://github.com/paullouisageneau/libdatachannel.git
+    git clone ${GIT_OPTS} --recursive --branch v0.22.4 https://github.com/paullouisageneau/libdatachannel.git
     mkdir -p libdatachannel/build
     pushd libdatachannel/build
 
@@ -486,3 +487,4 @@ rm -rf ${TMPDIR}
 if [ -z "${SKIP_LDCONFIG+x}${DEPS_SCAN+x}" ]; then
     ldconfig
 fi
+  
