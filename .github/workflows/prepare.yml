@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Prepare
+
+on:
+  workflow_call:
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/villas/node
+  DOCKER_TAG: ${{ github.sha }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  prepare-docker:
+    name: "prepare:docker [${{ matrix.name }}]"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu
+            docker_file: packaging/docker/Dockerfile.ubuntu
+            image_name: ubuntu
+          - name: debian
+            docker_file: packaging/docker/Dockerfile.debian
+            image_name: debian
+          - name: rocky
+            docker_file: packaging/docker/Dockerfile.rocky
+            image_name: rocky
+          - name: rocky9
+            docker_file: packaging/docker/Dockerfile.rocky9
+            image_name: rocky9
+          - name: fedora
+            docker_file: packaging/docker/Dockerfile.fedora
+            image_name: fedora
+          - name: fedora-minimal
+            docker_file: packaging/docker/Dockerfile.fedora-minimal
+            image_name: fedora-minimal
+          - name: fedora-vscode
+            docker_file: packaging/docker/Dockerfile.fedora
+            image_name: vscode
+            target: dev-vscode
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.docker_file }}
+          target: ${{ matrix.target || 'dev' }}
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ env.DOCKER_TAG }}
+            ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ github.ref_name }}
+
+      - name: Publish fedora dev alias
+        if: matrix.name == 'fedora'
+        run: |
+          docker buildx imagetools create \
+            -t "${{ env.DOCKER_IMAGE }}/dev:${{ env.DOCKER_TAG }}" \
+            -t "${{ env.DOCKER_IMAGE }}/dev:${{ github.ref_name }}" \
+            "${{ env.DOCKER_IMAGE }}/dev-fedora:${{ env.DOCKER_TAG }}"

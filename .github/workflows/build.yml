@@ -1,0 +1,120 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Build
+
+on:
+  workflow_call:
+
+env:
+  CMAKE_BUILD_OPTS: --parallel 16
+  CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
+  CACHIX_CACHE_NAME: villas
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-source:
+    name: "build:source [${{ matrix.distro }}]"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-${{ matrix.image_name }}:${{ github.sha }}
+      options: --user root
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: fedora
+            image_name: fedora
+            cmake_extra_opts: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+          - distro: fedora-minimal
+            image_name: fedora-minimal
+            cmake_extra_opts: >-
+              -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+              -DWITH_API=OFF
+              -DWITH_CLIENTS=OFF
+              -DWITH_CONFIG=OFF
+              -DWITH_DOC=OFF
+              -DWITH_FPGA=OFF
+              -DWITH_GRAPHVIZ=OFF
+              -DWITH_HOOKS=OFF
+              -DWITH_LUA=OFF
+              -DWITH_OPENMP=OFF
+              -DWITH_PLUGINS=OFF
+              -DWITH_SRC=OFF
+              -DWITH_TESTS=OFF
+              -DWITH_TOOLS=OFF
+              -DWITH_WEB=OFF
+              -DCMAKE_MODULE_PATH=/usr/local/lib64/cmake
+              -DCMAKE_PREFIX_PATH=/usr/local
+          - distro: debian
+            image_name: debian
+          - distro: rocky
+            image_name: rocky
+          - distro: rocky9
+            image_name: rocky9
+          - distro: ubuntu
+            image_name: ubuntu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure
+        run: cmake -S . -B build ${{ matrix.cmake_extra_opts || env.CMAKE_EXTRA_OPTS }}
+
+      - name: Build
+        run: cmake --build build ${{ env.CMAKE_BUILD_OPTS }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.distro }}
+          path: build/
+          retention-days: 7
+
+  # build-nix:
+  #   name: "build:nix [${{ matrix.system }}]"
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: docker.nix-community.org/nixpkgs/cachix-flakes
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       system: [x86_64-linux, aarch64-linux]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #         submodules: recursive
+  #
+  #     - name: Configure Cachix
+  #       run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
+  #       env:
+  #         CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+  #
+  #     - name: Build
+  #       run: |
+  #         cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
+  #           nix build --print-build-logs ".#villas-node-${{ matrix.system }}"
+
+  build-openapi:
+    name: build:openapi
+    runs-on: ubuntu-latest
+    container:
+      image: node:24-alpine
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint OpenAPI spec
+        run: npx -y @redocly/cli lint --config doc/redocly.yaml doc/openapi/openapi.yaml
+
+      - name: Build OpenAPI docs
+        run: npx -y @redocly/cli build-docs --config doc/redocly.yaml doc/openapi/openapi.yaml --output openapi.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openapi
+          path: openapi.html

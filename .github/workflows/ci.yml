@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+
+on:
+  push:
+    branches:
+    tags:
+  pull_request:
+    branches:
+  workflow_dispatch:
+    inputs:
+      publish_latest:
+        description: Publish dev and app images as latest
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    uses: ./.github/workflows/prepare.yml
+    secrets: inherit
+
+  build:
+    needs: [prepare]
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  test:
+    needs: [build]
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  packaging:
+    if: github.event_name != 'pull_request'
+    needs: [test]
+    uses: ./.github/workflows/packaging.yml
+    secrets: inherit
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: [packaging]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      publish_latest: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_latest || false }}
+    secrets: inherit

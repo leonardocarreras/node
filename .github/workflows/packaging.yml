@@ -1,0 +1,174 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Packaging
+
+on:
+  workflow_call:
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/villas/node
+  CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
+  CACHIX_CACHE_NAME: villas
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  pkg-docker:
+    name: "pkg:docker [${{ matrix.arch }}]"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: debian
+            platform: linux/amd64
+            arch: x86_64
+            triplet: x86_64-linux-gnu
+          - distro: debian
+            platform: linux/arm64
+            arch: arm64
+            triplet: aarch64-linux-gnu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.arch != 'x86_64'
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packaging/docker/Dockerfile.${{ matrix.distro }}
+          target: app
+          push: true
+          pull: true
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            ARCH=${{ matrix.arch }}
+            TRIPLET=${{ matrix.triplet }}
+            CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
+          tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-${{ matrix.arch }}
+
+  pkg-nix-arx:
+    name: "pkg:nix:arx [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.nix-community.org/nixpkgs/cachix-flakes
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure Cachix
+        run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Bundle as arx
+        run: |
+          cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
+            nix bundle --print-build-logs --out-link bundle-arx \
+            --bundler github:nix-community/nix-bundle \
+            ".#villas-node-${{ matrix.system }}"
+          mkdir -p artifacts
+          cp -L bundle-arx artifacts/villas-${{ matrix.system }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: villas-arx-${{ matrix.system }}
+          path: artifacts/
+          retention-days: 365
+
+  pkg-nix-rpm:
+    name: "pkg:nix:rpm [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.nix-community.org/nixpkgs/cachix-flakes
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure Cachix
+        run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Bundle as RPM
+        run: |
+          cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
+            nix bundle --print-build-logs --out-link bundle-rpm \
+            --bundler github:NixOS/bundlers#toRPM \
+            ".#villas-node-${{ matrix.system }}"
+          mkdir -p artifacts
+          cp -L bundle-rpm/*.rpm artifacts/villas-${{ matrix.system }}.rpm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: villas-rpm-${{ matrix.system }}
+          path: artifacts/
+          retention-days: 365
+
+  pkg-nix-docker:
+    name: "pkg:nix:docker [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.nix-community.org/nixpkgs/cachix-flakes
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure Cachix
+        run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Bundle as Docker image
+        run: |
+          mkdir -p /var/tmp/
+          cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
+            nix bundle --print-build-logs --out-link bundle-docker \
+            --bundler github:NixOS/bundlers#toDockerImage \
+            ".#villas-node-${{ matrix.system }}"
+
+      - name: Push to registry
+        run: |
+          nix run nixpkgs#skopeo -- login \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}" \
+            "${{ env.REGISTRY }}"
+          nix run nixpkgs#skopeo -- \
+            --tmpdir="${{ runner.temp }}" \
+            --insecure-policy \
+            copy "docker-archive:./bundle-docker" \
+            "docker://${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-nix-${{ matrix.system }}"

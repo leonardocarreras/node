@@ -1,0 +1,172 @@
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+
+on:
+  workflow_call:
+
+env:
+  CMAKE_BUILD_OPTS: --parallel 16
+  CMAKE_OPTS:  -Wno-dev -G=Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  # test-pre-commit:
+  #   name: test:pre-commit
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: python:3.12.10-slim-bookworm
+  #     options: --user root
+  #   steps:
+  #     - name: Install git
+  #       run: apt-get update && apt-get -y install git ruby
+  #
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Install dependencies
+  #       run:
+  #         # apt-get update && apt-get -y install git ruby
+  #         pip install --no-cache-dir pre-commit
+  #
+  #     # - name: Add Git safe directory
+  #     #   run: git config --global --add safe.directory '*'
+  #
+  #     - name: Run pre-commit
+  #       run: |
+  #         git version
+  #         pre-commit run --all-files
+  #         cat /github/home/.cache/pre-commit/pre-commit.log
+  #
+  #
+  #     - name: Upload log
+  #       if: failure()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: pre-commit-log
+  #         path: /github/home/.cache/pre-commit/pre-commit.log
+
+  test-python:
+    name: test:python
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Run Python tests
+        run: |
+          cd python
+          pytest --verbose .
+
+      - name: Check formatting
+        run: |
+          cd python
+          black --line-length=90 --extend-exclude=".*(\.pyi|_pb2.py)$" --check .
+
+      - name: Lint with flake8
+        run: |
+          cd python
+          flake8 --max-line-length=90 --extend-exclude="*.pyi,*_pb2.py" .
+
+      - name: Type check with mypy
+        run: |
+          cd python
+          mypy --namespace-packages --explicit-package-bases .
+
+  test-cppcheck:
+    name: test:cppcheck
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Run cppcheck
+        run: ./tools/run-cppcheck.sh | tee cppcheck.log
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cppcheck-log
+          path: cppcheck.log
+
+  test-unit:
+    name: test:unit
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build and run unit tests
+        run: LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-unit-tests run-unit-tests-common
+
+  # test-integration:
+  #   name: test:integration
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+  #     options: --user root
+  #   services:
+  #     rabbitmq:
+  #       image: rwthacs/rabbitmq
+  #     redis:
+  #       image: redis:6.2
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #         submodules: recursive
+  #
+  #     - name: Start mosquitto
+  #       run: |
+  #         echo "127.0.0.1 mosquitto" >> /etc/hosts
+  #         cat > /tmp/mosquitto.conf <<'EOF'
+  #         listener 1883
+  #         allow_anonymous true
+  #         EOF
+  #         mosquitto -c /tmp/mosquitto.conf -d
+  #
+  #     - name: Configure
+  #       run: |
+  #           cmake -S . -B build --target install ${{ env.CMAKE_OPTS }}
+  #
+  #     - name: Build and run integration tests
+  #       # run: cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-integration-tests
+  #       run: cmake --build build --target run-integration-tests
+  #     - uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: integration-tests
+  #         path: build/tests/integration/
+
+  test-reuse:
+    name: test:reuse
+    runs-on: ubuntu-latest
+    container:
+      image: fsfe/reuse:latest
+      options: --entrypoint ""
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run REUSE lint
+        run: reuse lint
