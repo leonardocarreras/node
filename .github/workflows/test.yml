@@ -53,7 +53,7 @@ jobs:
     name: test:python
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +85,7 @@ jobs:
     name: test:cppcheck
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
     name: test:unit
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +124,7 @@ jobs:
   #   name: test:integration
   #   runs-on: ubuntu-latest
   #   container:
-  #     image: ghcr.io/${{ github.repository_owner }}/villas/node/dev-fedora:${{ github.sha }}
+  #     image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
   #     options: --user root
   #   services:
   #     rabbitmq:
