@@ -20,7 +20,7 @@ jobs:
     name: "build:source [${{ matrix.distro }}]"
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository_owner | toLowerCase }}/villas/node/dev-${{ matrix.image_name }}:${{ github.sha }}
+      image: ghcr.io/villasframework/villas/node/dev-${{ matrix.image_name }}:${{ github.sha }}
       options: --user root
     strategy:
       fail-fast: false

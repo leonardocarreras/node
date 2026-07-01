@@ -13,7 +13,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner | toLowerCase }}/villas/node
+  DOCKER_IMAGE: ghcr.io/villasframework/villas/node
 
 permissions:
   contents: read

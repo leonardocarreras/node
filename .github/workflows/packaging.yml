@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner | toLowerCase }}/villas/node
+  DOCKER_IMAGE: ghcr.io/villasframework/villas/node
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
   CACHIX_CACHE_NAME: villas
 
