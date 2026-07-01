@@ -61,7 +61,7 @@ jobs:
             ARCH=${{ matrix.arch }}
             TRIPLET=${{ matrix.triplet }}
             CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
-          tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-${{ matrix.arch }}
+          tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}_${{ matrix.arch }}
 
   pkg-nix-arx:
     name: "pkg:nix:arx [${{ matrix.system }}]"
