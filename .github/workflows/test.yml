@@ -8,7 +8,7 @@ on:
 
 env:
   CMAKE_BUILD_OPTS: --parallel 16
-  CMAKE_OPTS:  -Wno-dev -G=Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX}
+  CMAKE_OPTS: -DCMAKE_INSTALL_PREFIX=${PREFIX}
 
 permissions:
   contents: read
@@ -120,44 +120,44 @@ jobs:
       - name: Build and run unit tests
         run: LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-unit-tests run-unit-tests-common
 
-  # test-integration:
-  #   name: test:integration
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
-  #     options: --user root
-  #   services:
-  #     rabbitmq:
-  #       image: rwthacs/rabbitmq
-  #     redis:
-  #       image: redis:6.2
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #         submodules: recursive
-  #
-  #     - name: Start mosquitto
-  #       run: |
-  #         echo "127.0.0.1 mosquitto" >> /etc/hosts
-  #         cat > /tmp/mosquitto.conf <<'EOF'
-  #         listener 1883
-  #         allow_anonymous true
-  #         EOF
-  #         mosquitto -c /tmp/mosquitto.conf -d
-  #
-  #     - name: Configure
-  #       run: |
-  #           cmake -S . -B build --target install ${{ env.CMAKE_OPTS }}
-  #
-  #     - name: Build and run integration tests
-  #       # run: cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-integration-tests
-  #       run: cmake --build build --target run-integration-tests
-  #     - uses: actions/upload-artifact@v4
-  #       if: always()
-  #       with:
-  #         name: integration-tests
-  #         path: build/tests/integration/
+  test-integration:
+    name: test:integration
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
+      options: --user root
+    services:
+      rabbitmq:
+        image: rwthacs/rabbitmq
+      redis:
+        image: redis:6.2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Start mosquitto
+        run: |
+          echo "127.0.0.1 mosquitto" >> /etc/hosts
+          cat > /tmp/mosquitto.conf <<'EOF'
+          listener 1883
+          allow_anonymous true
+          EOF
+          mosquitto -c /tmp/mosquitto.conf -d
+
+      - name: Configure
+        run: |
+            cmake -S . -B build
+            cmake --build build --target install ${{ env.CMAKE_OPTS }}
+
+      - name: Build and run integration tests
+        run: cmake --build build --target run-integration-tests
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-tests
+          path: build/tests/integration/
 
   test-reuse:
     name: test:reuse
