@@ -44,10 +44,7 @@ jobs:
   latest-docker:
     name: latest:docker
     if: startsWith(github.ref, 'refs/tags/v')
-    needs:
-    - deploy-docker-x86_64
-    - deplot-docker-arm64
-
+    needs: [deploy-docker]
     runs-on: ubuntu-latest
     steps:
       - uses: docker/login-action@v3
@@ -86,10 +83,7 @@ jobs:
   latest-docker-manual:
     name: latest:docker (manual)
     if: inputs.publish_latest
-    needs:
-    - deploy-docker-x86_64
-    - deplot-docker-arm64
-
+    needs: [deploy-docker]
     runs-on: ubuntu-latest
     steps:
       - uses: docker/login-action@v3
