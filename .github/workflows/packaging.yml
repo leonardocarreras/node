@@ -11,6 +11,7 @@ env:
   DOCKER_IMAGE: ghcr.io/villasframework/villas/node
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
   CACHIX_CACHE_NAME: villas
+  DOCKER_FILE: packaging/docker/Dockerfile.fedora
 
 permissions:
   contents: read
@@ -39,7 +40,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: packaging/docker/Dockerfile.${{ matrix.distro }}
+          file: ${{ env.DOCKER_FILE }}
           target: app
           push: true
           pull: true
