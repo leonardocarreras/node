@@ -18,28 +18,15 @@ permissions:
 
 jobs:
   pkg-docker:
-    name: "pkg:docker [${{ matrix.arch }}]"
+    name: "pkg:docker [x86_64]"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - distro: debian
-            platform: linux/amd64
-            arch: x86_64
-            triplet: x86_64-linux-gnu
-          - distro: debian
-            platform: linux/arm64
-            arch: arm64
-            triplet: aarch64-linux-gnu
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
-
-      - uses: docker/setup-qemu-action@v3
-        if: matrix.arch != 'x86_64'
 
       - uses: docker/setup-buildx-action@v3
 
@@ -56,12 +43,42 @@ jobs:
           target: app
           push: true
           pull: true
-          platforms: ${{ matrix.platform }}
+          platforms: amd64
           build-args: |
-            ARCH=${{ matrix.arch }}
-            TRIPLET=${{ matrix.triplet }}
+            ARCH=x86_64
+            TRIPLET=x86_64-linux-gnu
             CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
-          tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-${{ matrix.arch }}
+          tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-x86_64
+    pkg-docker-arm64:
+      name: "pkg:docker [arm64]"
+      runs-on: ubuntu-24.04-arm
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            submodules: recursive
+
+        - uses: docker/setup-buildx-action@v3
+
+        - uses: docker/login-action@v3
+          with:
+              registry: ${{ env.REGISTRY }}
+              username: ${{ github.actor }}
+              password: ${{ secrets.GITHUB_TOKEN }}
+
+        - uses: docker/build-push-action@v6
+          with:
+            context: .
+            file: packaging/docker/Dockerfile.debian
+            target: app
+            push: true
+            pull: true
+            platforms: linux/arm64
+            build-args: |
+              ARCH=arm64
+              TRIPLET=aarch64-linux-gnu
+              CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
+            tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64
 
   # pkg-nix-arx:
   #   name: "pkg:nix:arx [${{ matrix.system }}]"
