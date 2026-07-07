@@ -37,9 +37,9 @@ jobs:
           #   "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-x86_64" \
           #   "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64"
           # docker manifest push "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}"
-          docker buildx imagetools create -t ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}" \
+          docker buildx imagetools create -t "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}" \
             "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-x86_64" \
-            "${{env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64"
+            "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64"
 
   latest-docker:
     name: latest:docker
