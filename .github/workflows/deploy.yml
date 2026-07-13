@@ -77,7 +77,7 @@ jobs:
 
   latest-docker:
     name: latest:docker
-    if: inputs.is_version_tag
+    if: ${{ inputs.is_version_tag }}
     needs: [deploy-docker]
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +97,7 @@ jobs:
 
   latest-docker-dev:
     name: latest:docker-dev
-    if: inputs.is_version_tag
+    if: ${{ inputs.is_version_tag }}
     needs: [deploy-docker-dev]
     runs-on: ubuntu-latest
     steps:
@@ -117,7 +117,7 @@ jobs:
 
   latest-docker-manual:
     name: latest:docker (manual)
-    if: !inputs.is_version_tag
+    if: ${{ !inputs.is_version_tag }}
     needs: [deploy-docker]
     runs-on: ubuntu-latest
     environment: latest-docker-manual
@@ -138,7 +138,7 @@ jobs:
 
   latest-docker-dev-manual:
     name: latest:docker-dev (manual)
-    if: !inputs.is_version_tag
+    if: ${{ !inputs.is_version_tag }}
     needs: [deploy-docker-dev]
     runs-on: ubuntu-latest
     environment: latest-docker-dev-manual
