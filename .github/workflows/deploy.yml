@@ -5,6 +5,11 @@ name: Deploy
 
 on:
   workflow_call:
+    inputs:
+      is_version_tag:
+        required: false
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -72,7 +77,7 @@ jobs:
 
   latest-docker:
     name: latest:docker
-    if: github.ref_type == 'tag' && matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
+    if: inputs.is_version_tag
     needs: [deploy-docker]
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +97,7 @@ jobs:
 
   latest-docker-dev:
     name: latest:docker-dev
-    if: github.ref_type == 'tag' && matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
+    if: inputs.is_version_tag
     needs: [deploy-docker-dev]
     runs-on: ubuntu-latest
     steps:
@@ -112,7 +117,7 @@ jobs:
 
   latest-docker-manual:
     name: latest:docker (manual)
-    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
+    if: !inputs.is_version_tag
     needs: [deploy-docker]
     runs-on: ubuntu-latest
     environment: latest-docker-manual
@@ -133,7 +138,7 @@ jobs:
 
   latest-docker-dev-manual:
     name: latest:docker-dev (manual)
-    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
+    if: !inputs.is_version_tag
     needs: [deploy-docker-dev]
     runs-on: ubuntu-latest
     environment: latest-docker-dev-manual
