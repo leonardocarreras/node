@@ -9,7 +9,6 @@ on:
 env:
   REGISTRY: ghcr.io
   DOCKER_IMAGE: ghcr.io/villasframework/villas/node
-  VERSION_TAG_REGEX: '^v[0-9]+(\.[0-9]+)+$'
 
 permissions:
   contents: read
@@ -73,7 +72,7 @@ jobs:
 
   latest-docker:
     name: latest:docker
-    if: github.ref_type == 'tag' && matches(github.ref_name, env.VERSION_TAG_REGEX)
+    if: github.ref_type == 'tag' && matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
     needs: [deploy-docker]
     runs-on: ubuntu-latest
     steps:
@@ -93,7 +92,7 @@ jobs:
 
   latest-docker-dev:
     name: latest:docker-dev
-    if: github.ref_type == 'tag' && matches(github.ref_name, env.VERSION_TAG_REGEX)
+    if: github.ref_type == 'tag' && matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
     needs: [deploy-docker-dev]
     runs-on: ubuntu-latest
     steps:
@@ -113,7 +112,7 @@ jobs:
 
   latest-docker-manual:
     name: latest:docker (manual)
-    if: github.ref_type != 'tag' || !matches(github.ref_name, env.VERSION_TAG_REGEX)
+    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
     needs: [deploy-docker]
     runs-on: ubuntu-latest
     environment: latest-docker-manual
@@ -134,7 +133,7 @@ jobs:
 
   latest-docker-dev-manual:
     name: latest:docker-dev (manual)
-    if: github.ref_type != 'tag' || !matches(github.ref_name, env.VERSION_TAG_REGEX)
+    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]+(\.[0-9]+)+$')
     needs: [deploy-docker-dev]
     runs-on: ubuntu-latest
     environment: latest-docker-dev-manual
