@@ -56,17 +56,25 @@ jobs:
       docker_image: ${{ needs.setup.outputs.docker_image }}
     secrets: inherit
 
-  packaging:
+  packaging-docker:
     if: github.event_name != 'pull_request'
     needs: [setup, test]
-    uses: ./.github/workflows/packaging.yml
+    uses: ./.github/workflows/packaging-docker.yml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+    secrets: inherit
+
+  packaging-nix:
+    if: github.event_name != 'pull_request'
+    needs: [setup, test]
+    uses: ./.github/workflows/packaging-nix.yml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
     secrets: inherit
 
   deploy:
     if: github.event_name != 'pull_request'
-    needs: [setup, packaging]
+    needs: [setup, packaging-docker]
     uses: ./.github/workflows/deploy.yml
     with:
       docker_image: ${{ needs.setup.outputs.docker_image }}
