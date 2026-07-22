@@ -92,6 +92,8 @@ jobs:
           file: ${{ matrix.docker_file }}
           target: ${{ matrix.target || 'dev' }}
           push: true
+          cache-from: type=gha,scope=dev-${{ matrix.image_name }}
+          cache-to: type=gha,mode=max,scope=dev-${{ matrix.image_name }}
           tags: |
             ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.hash.outputs.tag }}
             ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ env.DOCKER_TAG }}
