@@ -16,10 +16,6 @@ jobs:
   build-nix:
     name: "build:nix [${{ matrix.system }}]"
     runs-on: ubuntu-latest
-    container:
-      image: docker.nix-community.org/nixpkgs/cachix-flakes
-    env:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -30,13 +26,15 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Configure Cachix
-        run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
+      - uses: cachix/install-nix-action@v31
+
+      - uses: cachix/cachix-action@v17
+        with:
+          name: ${{ env.CACHIX_CACHE_NAME }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: Build
-        run: |
-          cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
-            nix build --print-build-logs ".#villas-node-${{ matrix.system }}"
+        run: nix build --print-build-logs ".#villas-node-${{ matrix.system }}"
 
   build-openapi:
     name: build:openapi
