@@ -67,7 +67,25 @@ jobs:
         id: ref
         run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
+      - name: Compute image content hash
+        id: hash
+        run: echo "tag=${{ hashFiles(matrix.docker_file, 'packaging/deps.sh', 'packaging/patches/**', 'python/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check for an already-built image
+        id: existing
+        run: |
+          # Always rebuild on master; otherwise reuse an identical image if it exists.
+          if [ "${{ github.ref_name }}" = "master" ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          elif docker buildx imagetools inspect \
+              "${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.hash.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push dev image
+        if: steps.existing.outputs.exists != 'true'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -75,8 +93,17 @@ jobs:
           target: ${{ matrix.target || 'dev' }}
           push: true
           tags: |
+            ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.hash.outputs.tag }}
             ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ env.DOCKER_TAG }}
             ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.ref.outputs.tag }}
+
+      - name: Tag existing image for this commit
+        if: steps.existing.outputs.exists == 'true'
+        run: |
+          docker buildx imagetools create \
+            -t "${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ env.DOCKER_TAG }}" \
+            -t "${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.ref.outputs.tag }}" \
+            "${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.hash.outputs.tag }}"
 
       - name: Publish fedora dev alias
         if: matrix.name == 'fedora'
