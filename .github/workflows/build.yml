@@ -13,7 +13,7 @@ on:
 env:
   CMAKE_BUILD_OPTS: --parallel 16
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
-  CACHIX_CACHE_NAME: villas
+  CACHIX_CACHE_NAME: ${{ vars.CACHIX_CACHE_NAME || 'villas' }}
 
 permissions:
   contents: read

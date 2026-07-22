@@ -14,7 +14,7 @@ env:
   REGISTRY: ghcr.io
   DOCKER_IMAGE: ${{ inputs.docker_image }}
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
-  CACHIX_CACHE_NAME: villas
+  CACHIX_CACHE_NAME: ${{ vars.CACHIX_CACHE_NAME || 'villas' }}
   DOCKER_FILE: packaging/docker/Dockerfile.fedora
 
 permissions:
