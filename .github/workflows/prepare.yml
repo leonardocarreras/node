@@ -74,7 +74,6 @@ jobs:
       - name: Check for an already-built image
         id: existing
         run: |
-          # Always rebuild on master; otherwise reuse an identical image if it exists.
           if [ "${{ github.ref_name }}" = "master" ]; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
           elif docker buildx imagetools inspect \
