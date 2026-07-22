@@ -94,7 +94,7 @@ jobs:
           path: build
 
       - name: ccache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ${{ github.workspace }}/.ccache
           key: ccache-fedora-${{ github.sha }}
@@ -130,7 +130,7 @@ jobs:
           path: build
 
       - name: ccache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ${{ github.workspace }}/.ccache
           key: ccache-fedora-${{ github.sha }}
