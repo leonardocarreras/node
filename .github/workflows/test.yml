@@ -15,39 +15,33 @@ permissions:
   packages: read
 
 jobs:
-  # test-pre-commit:
-  #   name: test:pre-commit
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: python:3.12.10-slim-bookworm
-  #     options: --user root
-  #   steps:
-  #     - name: Install git
-  #       run: apt-get update && apt-get -y install git ruby
-  #
-  #     - uses: actions/checkout@v4
-  #
-  #     - name: Install dependencies
-  #       run:
-  #         # apt-get update && apt-get -y install git ruby
-  #         pip install --no-cache-dir pre-commit
-  #
-  #     # - name: Add Git safe directory
-  #     #   run: git config --global --add safe.directory '*'
-  #
-  #     - name: Run pre-commit
-  #       run: |
-  #         git version
-  #         pre-commit run --all-files
-  #         cat /github/home/.cache/pre-commit/pre-commit.log
-  #
-  #
-  #     - name: Upload log
-  #       if: failure()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: pre-commit-log
-  #         path: /github/home/.cache/pre-commit/pre-commit.log
+  test-pre-commit:
+    name: test:pre-commit
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12.10-slim-bookworm
+      options: --user root
+    steps:
+      - name: Install git and ruby
+        run: apt-get update && apt-get -y install git ruby
+
+      - uses: actions/checkout@v4
+
+      - name: Add Git safe directory
+        run: git config --global --add safe.directory '*'
+
+      - name: Install pre-commit
+        run: pip install --no-cache-dir pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+      - name: Upload log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-commit-log
+          path: /github/home/.cache/pre-commit/pre-commit.log
 
   test-python:
     name: test:python
