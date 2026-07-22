@@ -5,6 +5,10 @@ name: Build
 
 on:
   workflow_call:
+    inputs:
+      docker_image:
+        required: true
+        type: string
 
 env:
   CMAKE_BUILD_OPTS: --parallel 16
@@ -20,7 +24,7 @@ jobs:
     name: "build:source [${{ matrix.distro }}]"
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/villasframework/villas/node/dev-${{ matrix.image_name }}:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-${{ matrix.image_name }}:${{ github.sha }}
       options: --user root
     strategy:
       fail-fast: false

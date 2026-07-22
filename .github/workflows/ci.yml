@@ -15,28 +15,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  setup:
+    name: setup
+    runs-on: ubuntu-latest
+    outputs:
+      docker_image: ${{ steps.image.outputs.docker_image }}
+    steps:
+      - name: Compute image name for the current repository
+        id: image
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "docker_image=ghcr.io/${OWNER,,}/villas/node" >> "$GITHUB_OUTPUT"
+
   prepare:
+    needs: [setup]
     uses: ./.github/workflows/prepare.yml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
     secrets: inherit
 
   build:
-    needs: [prepare]
+    needs: [setup, prepare]
     uses: ./.github/workflows/build.yml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
     secrets: inherit
 
   test:
-    needs: [build]
+    needs: [setup, build]
     uses: ./.github/workflows/test.yml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
     secrets: inherit
 
   packaging:
     if: github.event_name != 'pull_request'
-    needs: [test]
+    needs: [setup, test]
     uses: ./.github/workflows/packaging.yml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
     secrets: inherit
 
   deploy:
     if: github.event_name != 'pull_request'
-    needs: [packaging]
+    needs: [setup, packaging]
     uses: ./.github/workflows/deploy.yml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
     secrets: inherit

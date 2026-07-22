@@ -5,10 +5,14 @@ name: Packaging
 
 on:
   workflow_call:
+    inputs:
+      docker_image:
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
-  DOCKER_IMAGE: ghcr.io/villasframework/villas/node
+  DOCKER_IMAGE: ${{ inputs.docker_image }}
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
   CACHIX_CACHE_NAME: villas
   DOCKER_FILE: packaging/docker/Dockerfile.fedora

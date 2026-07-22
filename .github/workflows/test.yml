@@ -5,6 +5,10 @@ name: Test
 
 on:
   workflow_call:
+    inputs:
+      docker_image:
+        required: true
+        type: string
 
 env:
   CMAKE_BUILD_OPTS: --parallel 16
@@ -47,7 +51,7 @@ jobs:
     name: test:python
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +83,7 @@ jobs:
     name: test:cppcheck
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -100,7 +104,7 @@ jobs:
     name: test:unit
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -118,7 +122,7 @@ jobs:
     name: test:integration
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/villasframework/villas/node/dev-fedora:${{ github.sha }}
+      image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
       options: --user root
     services:
       rabbitmq:
