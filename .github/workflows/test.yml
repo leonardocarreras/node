@@ -13,6 +13,8 @@ on:
 env:
   CMAKE_BUILD_OPTS: --parallel $(nproc)
   CMAKE_OPTS: -DCMAKE_INSTALL_PREFIX=${PREFIX}
+  CCACHE: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
 
 permissions:
   contents: read
@@ -84,8 +86,15 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-fedora-${{ github.sha }}
+          restore-keys: ccache-fedora-
+
       - name: Configure
-        run: cmake -S . -B build
+        run: cmake -S . -B build ${{ env.CCACHE }}
 
       - name: Build and run unit tests
         run: LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH cmake --build build ${{ env.CMAKE_BUILD_OPTS }} --target run-unit-tests run-unit-tests-common
@@ -107,6 +116,13 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-fedora-${{ github.sha }}
+          restore-keys: ccache-fedora-
+
       - name: Start mosquitto
         run: |
           echo "127.0.0.1 mosquitto" >> /etc/hosts
@@ -118,7 +134,7 @@ jobs:
 
       - name: Configure
         run: |
-            cmake -S . -B build
+            cmake -S . -B build ${{ env.CCACHE }}
             cmake --build build --target install
 
       - name: Build and run integration tests

@@ -13,6 +13,7 @@ on:
 env:
   CMAKE_BUILD_OPTS: --parallel $(nproc)
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
 
 permissions:
   contents: read
@@ -31,7 +32,10 @@ jobs:
         include:
           - distro: fedora
             image_name: fedora
-            cmake_extra_opts: -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+            cmake_extra_opts: >-
+              -DVILLAS_COMPILE_WARNING_AS_ERROR=ON
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           - distro: fedora-minimal
             image_name: fedora-minimal
             cmake_extra_opts: >-
@@ -65,6 +69,14 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+
+      - name: ccache
+        if: matrix.distro == 'fedora'
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-fedora-${{ github.sha }}
+          restore-keys: ccache-fedora-
 
       - name: Configure
         run: cmake -S . -B build ${{ matrix.cmake_extra_opts || env.CMAKE_EXTRA_OPTS }}
