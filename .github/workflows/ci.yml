@@ -80,3 +80,12 @@ jobs:
       docker_image: ${{ needs.setup.outputs.docker_image }}
       is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
     secrets: inherit
+
+  deploy-nix:
+    if: github.event_name != 'pull_request'
+    needs: [setup, packaging-nix]
+    uses: ./.github/workflows/deploy-nix.yml
+    with:
+      docker_image: ${{ needs.setup.outputs.docker_image }}
+      is_version_tag: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    secrets: inherit

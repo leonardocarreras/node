@@ -1,0 +1,121 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Deploy (Nix)
+
+on:
+  workflow_call:
+    inputs:
+      docker_image:
+        required: true
+        type: string
+      is_version_tag:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_IMAGE: ${{ inputs.docker_image }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy-docker-nix:
+    name: deploy:docker-nix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push multi-arch nix manifest
+        run: |
+          docker buildx imagetools create \
+            -t "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-nix" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-nix-x86_64-linux" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-nix-aarch64-linux"
+
+  latest-docker-nix:
+    name: latest:docker-nix
+    if: ${{ inputs.is_version_tag }}
+    needs: [deploy-docker-nix]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag nix manifest as latest-nix
+        run: |
+          docker buildx imagetools create \
+            -t "${{ env.DOCKER_IMAGE }}:latest-nix" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-nix"
+
+  latest-docker-nix-manual:
+    name: latest:docker-nix (manual)
+    if: ${{ !inputs.is_version_tag }}
+    needs: [deploy-docker-nix]
+    runs-on: ubuntu-latest
+    environment: latest-docker-nix-manual
+    steps:
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag nix manifest as latest-nix (manual)
+        run: |
+          docker buildx imagetools create \
+            -t "${{ env.DOCKER_IMAGE }}:latest-nix" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-nix"
+
+  release-nix:
+    name: release:nix
+    if: ${{ inputs.is_version_tag }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: villas-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish arx and rpm bundles to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+          || gh release upload "${GITHUB_REF_NAME}" dist/* \
+            --repo "${GITHUB_REPOSITORY}" --clobber
