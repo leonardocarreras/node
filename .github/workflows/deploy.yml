@@ -35,12 +35,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Create and push multi-arch manifest
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}" \
-            "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-x86_64" \
-            "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64"
+            -t "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-x86_64" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-arm64"
 
   deploy-docker-dev:
     name: deploy:docker-dev
@@ -54,11 +58,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Publish dev image for current ref
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}/dev:${{ github.ref_name }}" \
-            "${{ env.DOCKER_IMAGE }}/dev-fedora:${{ github.ref_name }}"
+            -t "${{ env.DOCKER_IMAGE }}/dev:${{ steps.ref.outputs.tag }}" \
+            "${{ env.DOCKER_IMAGE }}/dev-fedora:${{ steps.ref.outputs.tag }}"
 
   deploy-docker-dev-vscode:
     name: deploy:docker-dev-vscode
@@ -72,11 +80,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Publish dev-vscode image for current ref
         run: |
           docker buildx imagetools create \
-            -t "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ github.ref_name }}" \
-            "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ github.ref_name }}"
+            -t "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ steps.ref.outputs.tag }}" \
+            "${{ env.DOCKER_IMAGE }}/dev-vscode:${{ github.sha }}"
 
   latest-docker:
     name: latest:docker
@@ -92,12 +104,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Tag and push app image as latest
         run: |
           docker buildx imagetools create \
             -t "${{ env.DOCKER_IMAGE }}:latest" \
-            "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-x86_64" \
-            "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64"
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-x86_64" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-arm64"
 
   latest-docker-dev:
     name: latest:docker-dev
@@ -113,11 +129,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Tag and push dev image as latest
         run: |
           docker buildx imagetools create \
             -t "${{ env.DOCKER_IMAGE }}/dev:latest" \
-            "${{ env.DOCKER_IMAGE }}/dev:${{ github.ref_name }}"
+            "${{ env.DOCKER_IMAGE }}/dev:${{ steps.ref.outputs.tag }}"
 
   latest-docker-manual:
     name: latest:docker (manual)
@@ -134,12 +154,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Tag and push app image as latest (manual)
         run: |
           docker buildx imagetools create \
             -t "${{ env.DOCKER_IMAGE }}:latest" \
-            "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-x86_64" \
-            "${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64"
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-x86_64" \
+            "${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-arm64"
 
   latest-docker-dev-manual:
     name: latest:docker-dev (manual)
@@ -156,8 +180,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Tag and push dev image as latest (manual)
         run: |
           docker buildx imagetools create \
             -t "${{ env.DOCKER_IMAGE }}/dev:latest" \
-            "${{ env.DOCKER_IMAGE }}/dev:${{ github.ref_name }}"
+            "${{ env.DOCKER_IMAGE }}/dev:${{ steps.ref.outputs.tag }}"

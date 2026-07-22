@@ -41,6 +41,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v7
         with:
           context: .
@@ -57,7 +61,7 @@ jobs:
             ARCH=x86_64
             TRIPLET=x86_64-linux-gnu
             CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
-          tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-x86_64
+          tags: ${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-x86_64
 
   pkg-docker-arm64:
     name: "pkg:docker [arm64]"
@@ -76,6 +80,10 @@ jobs:
             username: ${{ github.actor }}
             password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v7
         with:
           context: .
@@ -90,7 +98,7 @@ jobs:
             ARCH=arm64
             TRIPLET=aarch64-linux-gnu
             CMAKE_OPTS=${{ env.CMAKE_EXTRA_OPTS }}
-          tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-arm64
+          tags: ${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-arm64
 
   pkg-nix-arx:
     name: "pkg:nix:arx [${{ matrix.system }}]"
@@ -190,6 +198,10 @@ jobs:
             --bundler github:NixOS/bundlers#toDockerImage \
             ".#villas-node-${{ matrix.system }}"
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Push to registry
         run: |
           nix run nixpkgs#skopeo -- login \
@@ -200,4 +212,4 @@ jobs:
             --tmpdir="${{ runner.temp }}" \
             --insecure-policy \
             copy "docker-archive:./bundle-docker" \
-            "docker://${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-nix-${{ matrix.system }}"
+            "docker://${{ env.DOCKER_IMAGE }}:${{ steps.ref.outputs.tag }}-nix-${{ matrix.system }}"
