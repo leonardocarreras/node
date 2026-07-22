@@ -69,7 +69,7 @@ jobs:
 
       - name: Compute image content hash
         id: hash
-        run: echo "tag=${{ hashFiles(matrix.docker_file, 'packaging/deps.sh', 'packaging/patches/**', 'python/**') }}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=${{ hashFiles(matrix.docker_file, 'packaging/deps.sh', 'packaging/patches/**', 'packaging/*.patch', 'python/**') }}" >> "$GITHUB_OUTPUT"
 
       - name: Check for an already-built image
         id: existing
