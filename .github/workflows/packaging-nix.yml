@@ -123,7 +123,12 @@ jobs:
         run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Push to registry
+        env:
+          # The GitHub runner ships a v1 /etc/containers/registries.conf, which
+          # the nixpkgs skopeo (v2-only) rejects. Point it at a minimal v2 file.
+          CONTAINERS_REGISTRIES_CONF: ${{ runner.temp }}/registries.conf
         run: |
+          echo 'unqualified-search-registries = []' > "$CONTAINERS_REGISTRIES_CONF"
           nix run nixpkgs#skopeo -- login \
             --username "${{ github.actor }}" \
             --password "${{ secrets.GITHUB_TOKEN }}" \
