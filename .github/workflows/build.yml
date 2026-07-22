@@ -62,7 +62,7 @@ jobs:
           - distro: ubuntu
             image_name: ubuntu
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -73,7 +73,7 @@ jobs:
       - name: Build
         run: cmake --build build ${{ env.CMAKE_BUILD_OPTS }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: build-${{ matrix.distro }}
           path: build/
@@ -91,7 +91,7 @@ jobs:
       matrix:
         system: [x86_64-linux, aarch64-linux]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -110,7 +110,7 @@ jobs:
     container:
       image: node:24-alpine
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Lint OpenAPI spec
         run: npx -y @redocly/cli lint --config doc/redocly.yaml doc/openapi/openapi.yaml
@@ -118,7 +118,7 @@ jobs:
       - name: Build OpenAPI docs
         run: npx -y @redocly/cli build-docs --config doc/redocly.yaml doc/openapi/openapi.yaml --output openapi.html
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openapi
           path: openapi.html

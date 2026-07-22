@@ -29,7 +29,7 @@ jobs:
       - name: Install git and ruby
         run: apt-get update && apt-get -y install git ruby
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Add Git safe directory
         run: git config --global --add safe.directory '*'
@@ -42,7 +42,7 @@ jobs:
 
       - name: Upload log
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pre-commit-log
           path: /github/home/.cache/pre-commit/pre-commit.log
@@ -54,7 +54,7 @@ jobs:
       image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -86,7 +86,7 @@ jobs:
       image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -94,7 +94,7 @@ jobs:
       - name: Run cppcheck
         run: ./tools/run-cppcheck.sh | tee cppcheck.log
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: cppcheck-log
@@ -107,7 +107,7 @@ jobs:
       image: ${{ inputs.docker_image }}/dev-fedora:${{ github.sha }}
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -130,7 +130,7 @@ jobs:
       redis:
         image: redis:6.2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -151,7 +151,7 @@ jobs:
 
       - name: Build and run integration tests
         run: cmake --build build --target run-integration-tests
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: integration-tests
@@ -164,7 +164,7 @@ jobs:
       image: fsfe/reuse:latest
       options: --entrypoint ""
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run REUSE lint
         run: reuse lint
