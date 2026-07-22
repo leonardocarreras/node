@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Nix
+
+on:
+  workflow_call:
+
+env:
+  CACHIX_CACHE_NAME: ${{ vars.CACHIX_CACHE_NAME || 'villas' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build-nix:
+    name: "build:nix [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: cachix/install-nix-action@v31
+
+      - uses: cachix/cachix-action@v17
+        with:
+          name: ${{ env.CACHIX_CACHE_NAME }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Build
+        run: nix build --print-build-logs ".#villas-node-${{ matrix.system }}"

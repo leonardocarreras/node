@@ -31,6 +31,10 @@ jobs:
     uses: ./.github/workflows/checks.yml
     secrets: inherit
 
+  nix:
+    uses: ./.github/workflows/nix.yml
+    secrets: inherit
+
   prepare:
     needs: [setup]
     uses: ./.github/workflows/prepare.yml
