@@ -19,6 +19,7 @@ env:
 permissions:
   contents: read
   packages: read
+  actions: read
 
 jobs:
   test-python:
@@ -86,6 +87,12 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Reuse compiled tree from build:source [fedora]
+        uses: actions/download-artifact@v7
+        with:
+          name: build-fedora
+          path: build
+
       - name: ccache
         uses: actions/cache/restore@v4
         with:
@@ -115,6 +122,12 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+
+      - name: Reuse compiled tree from build:source [fedora]
+        uses: actions/download-artifact@v7
+        with:
+          name: build-fedora
+          path: build
 
       - name: ccache
         uses: actions/cache/restore@v4
