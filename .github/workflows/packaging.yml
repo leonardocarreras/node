@@ -49,7 +49,9 @@ jobs:
           push: true
           pull: true
           platforms: amd64
-          cache-from: type=gha,scope=app-x86_64
+          cache-from: |
+            type=gha,scope=dev-fedora
+            type=gha,scope=app-x86_64
           cache-to: type=gha,mode=max,scope=app-x86_64
           build-args: |
             ARCH=x86_64
