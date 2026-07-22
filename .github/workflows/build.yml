@@ -13,7 +13,6 @@ on:
 env:
   CMAKE_BUILD_OPTS: --parallel 16
   CMAKE_EXTRA_OPTS: -DCMAKE_BUILD_TYPE=Release
-  CACHIX_CACHE_NAME: ${{ vars.CACHIX_CACHE_NAME || 'villas' }}
 
 permissions:
   contents: read
@@ -78,47 +77,3 @@ jobs:
           name: build-${{ matrix.distro }}
           path: build/
           retention-days: 7
-
-  build-nix:
-    name: "build:nix [${{ matrix.system }}]"
-    runs-on: ubuntu-latest
-    container:
-      image: docker.nix-community.org/nixpkgs/cachix-flakes
-    env:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
-    strategy:
-      fail-fast: false
-      matrix:
-        system: [x86_64-linux, aarch64-linux]
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Configure Cachix
-        run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
-
-      - name: Build
-        run: |
-          cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
-            nix build --print-build-logs ".#villas-node-${{ matrix.system }}"
-
-  build-openapi:
-    name: build:openapi
-    runs-on: ubuntu-latest
-    container:
-      image: node:24-alpine
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Lint OpenAPI spec
-        run: npx -y @redocly/cli lint --config doc/redocly.yaml doc/openapi/openapi.yaml
-
-      - name: Build OpenAPI docs
-        run: npx -y @redocly/cli build-docs --config doc/redocly.yaml doc/openapi/openapi.yaml --output openapi.html
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: openapi
-          path: openapi.html

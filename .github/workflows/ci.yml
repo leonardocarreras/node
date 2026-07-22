@@ -27,6 +27,10 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: echo "docker_image=ghcr.io/${OWNER,,}/villas/node" >> "$GITHUB_OUTPUT"
 
+  checks:
+    uses: ./.github/workflows/checks.yml
+    secrets: inherit
+
   prepare:
     needs: [setup]
     uses: ./.github/workflows/prepare.yml

@@ -19,34 +19,6 @@ permissions:
   packages: read
 
 jobs:
-  test-pre-commit:
-    name: test:pre-commit
-    runs-on: ubuntu-latest
-    container:
-      image: python:3.12.10-slim-bookworm
-      options: --user root
-    steps:
-      - name: Install git and ruby
-        run: apt-get update && apt-get -y install git ruby
-
-      - uses: actions/checkout@v7
-
-      - name: Add Git safe directory
-        run: git config --global --add safe.directory '*'
-
-      - name: Install pre-commit
-        run: pip install --no-cache-dir pre-commit
-
-      - name: Run pre-commit
-        run: pre-commit run --all-files
-
-      - name: Upload log
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: pre-commit-log
-          path: /github/home/.cache/pre-commit/pre-commit.log
-
   test-python:
     name: test:python
     runs-on: ubuntu-latest
@@ -156,15 +128,3 @@ jobs:
         with:
           name: integration-tests
           path: build/tests/integration/
-
-  test-reuse:
-    name: test:reuse
-    runs-on: ubuntu-latest
-    container:
-      image: fsfe/reuse:latest
-      options: --entrypoint ""
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Run REUSE lint
-        run: reuse lint
