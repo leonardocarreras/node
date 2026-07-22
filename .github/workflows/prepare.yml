@@ -59,6 +59,10 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      - name: Compute safe ref tag
+        id: ref
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push dev image
         uses: docker/build-push-action@v6
         with:
@@ -68,12 +72,12 @@ jobs:
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ env.DOCKER_TAG }}
-            ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ github.ref_name }}
+            ${{ env.DOCKER_IMAGE }}/dev-${{ matrix.image_name }}:${{ steps.ref.outputs.tag }}
 
       - name: Publish fedora dev alias
         if: matrix.name == 'fedora'
         run: |
           docker buildx imagetools create \
             -t "${{ env.DOCKER_IMAGE }}/dev:${{ env.DOCKER_TAG }}" \
-            -t "${{ env.DOCKER_IMAGE }}/dev:${{ github.ref_name }}" \
+            -t "${{ env.DOCKER_IMAGE }}/dev:${{ steps.ref.outputs.tag }}" \
             "${{ env.DOCKER_IMAGE }}/dev-fedora:${{ env.DOCKER_TAG }}"
