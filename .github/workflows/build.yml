@@ -75,30 +75,30 @@ jobs:
           path: build/
           retention-days: 7
 
-  # build-nix:
-  #   name: "build:nix [${{ matrix.system }}]"
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: docker.nix-community.org/nixpkgs/cachix-flakes
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       system: [x86_64-linux, aarch64-linux]
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #         submodules: recursive
-  #
-  #     - name: Configure Cachix
-  #       run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
-  #       env:
-  #         CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
-  #
-  #     - name: Build
-  #       run: |
-  #         cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
-  #           nix build --print-build-logs ".#villas-node-${{ matrix.system }}"
+  build-nix:
+    name: "build:nix [${{ matrix.system }}]"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.nix-community.org/nixpkgs/cachix-flakes
+    env:
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure Cachix
+        run: cachix use "${{ env.CACHIX_CACHE_NAME }}"
+
+      - name: Build
+        run: |
+          cachix watch-exec "${{ env.CACHIX_CACHE_NAME }}" -- \
+            nix build --print-build-logs ".#villas-node-${{ matrix.system }}"
 
   build-openapi:
     name: build:openapi
