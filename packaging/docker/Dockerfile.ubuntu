@@ -15,6 +15,13 @@ ARG DISTRO
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Prefer Azure's Ubuntu mirror (fast on Azure-hosted CI runners) while keeping
+# the default archive as a fallback. archive.ubuntu.com can throttle to a few
+# kB/s from Azure, which stalls the package install for tens of minutes.
+RUN sed -i -E \
+	's#https?://(archive|security)\.ubuntu\.com/ubuntu/?#http://azure.archive.ubuntu.com/ubuntu/ &#g' \
+	/etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+
 # Toolchain
 RUN apt-get update && \
 	apt-get install -y \
