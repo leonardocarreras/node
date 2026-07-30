@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/leonardocarreras/node/compare/v1.2.0...v1.3.0) (2026-07-30)
+
+
+### Miscellaneous Chores
+
+* probe 1.3.0 ([d3c831c](https://github.com/leonardocarreras/node/commit/d3c831c27dfe046f879c30a9268b08b856c2221e))
+
 ## [1.2.0](https://github.com/leonardocarreras/node/compare/v1.0.1...v1.2.0) (2026-07-30)
 
 
