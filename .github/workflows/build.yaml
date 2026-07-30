@@ -72,11 +72,12 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
+          allow-unsafe-pr-checkout: true
           fetch-depth: 0
           submodules: recursive
 
       - name: Setup ccache
-        if: matrix.distro == 'fedora'
+        if: matrix.distro == 'fedora' && github.event_name != 'pull_request_target'
         uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/.ccache
