@@ -110,6 +110,15 @@ jobs:
       ref: ${{ needs.setup.outputs.ref }}
       ref_name: ${{ needs.setup.outputs.ref_name }}
 
+  packaging-python:
+    name: Build Python Wheels
+    needs: [setup]
+    secrets: inherit
+    uses: ./.github/workflows/packaging-python.yaml
+    with:
+      container_image: ${{ needs.setup.outputs.container_image }}
+      ref: ${{ needs.setup.outputs.ref }}
+
   packaging-nix:
     name: Bundle Artifacts with Nix
     needs: [setup, nix]
@@ -162,6 +171,7 @@ jobs:
       - test
       - packaging-container
       - packaging-nix
+      - packaging-python
       - deploy
       - deploy-nix
     runs-on: ubuntu-latest

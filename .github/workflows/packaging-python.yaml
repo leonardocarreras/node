@@ -1,0 +1,144 @@
+# SPDX-FileCopyrightText: 2026 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+name: Packaging (Python)
+
+on:
+  workflow_call:
+    inputs:
+      container_image:
+        required: true
+        type: string
+      ref:
+        description: 'Revision under test'
+        required: true
+        type: string
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          allow-unsafe-pr-checkout: true
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Build source distribution
+        run: pipx run build --sdist --outdir dist/
+
+      - name: Archive source distribution
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-sdist
+          path: dist/
+
+  image:
+    name: Prepare Wheel Build Image
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          allow-unsafe-pr-checkout: true
+          submodules: recursive
+
+      - name: Login to Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Tagged by recipe, so the image is built once and pulled afterwards
+      - name: Compute image name
+        id: image
+        env:
+          CONTAINER_IMAGE: ${{ inputs.container_image }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          HASH=$(cat packaging/docker/Dockerfile.manylinux packaging/deps.sh \
+            $(find packaging/patches -type f | sort) | sha256sum | cut -c1-16)
+          echo "image=${CONTAINER_IMAGE:-ghcr.io/${REPOSITORY,,}}/manylinux:${HASH}" >> "$GITHUB_OUTPUT"
+          echo "latest=${CONTAINER_IMAGE:-ghcr.io/${REPOSITORY,,}}/manylinux:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Check for an existing image
+        id: existing
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          if docker buildx imagetools inspect "${IMAGE}" >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and Push Image
+        if: steps.existing.outputs.found == 'false'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: packaging/docker/Dockerfile.manylinux
+          push: true
+          cache-from: type=gha,scope=manylinux
+          cache-to: ${{ github.event_name != 'pull_request_target' && 'type=gha,mode=max,scope=manylinux' || '' }}
+          tags: |
+            ${{ steps.image.outputs.image }}
+            ${{ github.event_name == 'push' && steps.image.outputs.latest || '' }}
+
+  wheels:
+    name: Wheel (${{ matrix.python }}, ${{ matrix.variant }})
+    needs: [image]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: [cp310, cp311, cp312, cp313, cp314]
+        variant: [apache, gpl]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          allow-unsafe-pr-checkout: true
+          submodules: recursive
+
+      - name: Login to Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build wheel
+        uses: pypa/cibuildwheel@v4.2.0
+        env:
+          CIBW_BUILD: ${{ matrix.python }}-manylinux_x86_64
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ needs.image.outputs.image }}
+          CIBW_ENVIRONMENT_PASS_LINUX: SKBUILD_CMAKE_DEFINE VILLAS_WHEEL_VARIANT
+          SKBUILD_CMAKE_DEFINE: ${{ matrix.variant == 'gpl' && 'WITHOUT_GPL=OFF' || '' }}
+          VILLAS_WHEEL_VARIANT: ${{ matrix.variant }}
+
+      - name: Archive wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-wheel-${{ matrix.variant }}-${{ matrix.python }}
+          path: wheelhouse/
