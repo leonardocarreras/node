@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2023 OPAL-RT Germany GmbH
+# SPDX-License-Identifier: Apache-2.0
+
+[build-system]
+requires = ['scikit-build-core>=0.10', 'pybind11>=2.12', 'pybind11-stubgen>=2.5']
+build-backend = 'scikit_build_core.build'
+
+[project]
+name = 'villas-node'
+version = "1.2.0"
+description = 'Python support for the VILLASnode simulation-data gateway'
+readme = 'python/README.md'
+requires-python = '>=3.10'
+keywords = ['simulation', 'power', 'system', 'real-time', 'villas']
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Topic :: Scientific/Engineering',
+    'Operating System :: POSIX :: Linux',
+    'Programming Language :: Python :: 3',
+]
+dependencies = [
+    'linuxfd==1.5; platform_system=="Linux"',
+    'protobuf==6.32.1',
+    'libconf==2.0.1',
+]
+optional-dependencies.dev = [
+    'black==25.11.0',
+    'flake8==7.3.0',
+    'mypy==1.19.0',
+    'pytest==9.0.1',
+    'types-protobuf==6.32.1.20251105',
+]
+
+[project.scripts]
+villas-conf2orchestra-ddf = "villas.node.opal_orchestra_ddf:main"
+
+[project.urls]
+GitHub = 'https://github.com/VILLASframework/node'
+Project = 'https://www.fein-aachen.org/en/projects/villas-node'
+Homepage = 'https://villas.fein-aachen.org'
+
+[[project.authors]]
+name = 'Steffen Vogel'
+email = 'post@steffenvogel.de'
+
+[[project.authors]]
+name = 'Philipp Jungkamp'
+email = 'Philipp.Jungkamp@opal-rt.com'
+
+[tool.scikit-build]
+cmake.build-type = 'Release'
+build.targets = ['python-bindings']
+wheel.packages = ['python/villas']
+wheel.exclude = ['**/test_*.py']
+install.components = ['lib', 'python']
+wheel.license-files = ['LICENSE']
+sdist.exclude = ['.github', 'doc', 'paper', 'web']
+
+[tool.scikit-build.cmake.define]
+WITH_PYBIND = 'ON'
+WITH_CLIENTS = 'OFF'
+WITH_FPGA = 'OFF'
+WITH_PLUGINS = 'OFF'
+WITH_SRC = 'OFF'
+WITH_TESTS = 'OFF'
+WITH_TOOLS = 'OFF'
+WITHOUT_GPL = 'ON'
+VILLAS_PYTHON_INSTALL_DIR = '.'
+CMAKE_INSTALL_LIBDIR = 'villas/node'
+CMAKE_INSTALL_RPATH = '$ORIGIN'
+
+[tool.cibuildwheel]
+build = 'cp3{10,11,12,13,14}-manylinux_x86_64'
+build-verbosity = 1
+test-command = 'python {project}/packaging/check-wheel.py'
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = 'ghcr.io/villasframework/node/manylinux:latest'
+environment = { LD_LIBRARY_PATH = '/usr/local/lib:/usr/local/lib64', PKG_CONFIG_PATH = '/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig' }

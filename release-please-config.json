@@ -8,7 +8,7 @@
         "CMakeLists.txt",
         {
           "type": "toml",
-          "path": "python/pyproject.toml",
+          "path": "pyproject.toml",
           "jsonpath": "$.project.version"
         },
         {
