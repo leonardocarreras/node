@@ -66,7 +66,10 @@
       packagesWith = pkgs: rec {
         default = villas-node;
 
-        villas-node-python = pkgs.callPackage (nixDir + "/python.nix") { src = ./.; };
+        villas-node-python = pkgs.callPackage (nixDir + "/python.nix") {
+          src = ./.;
+          villas = villas-node-minimal;
+        };
 
         villas-node-minimal = pkgs.callPackage (nixDir + "/villas.nix") {
           src = ./.;

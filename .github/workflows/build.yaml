@@ -53,6 +53,7 @@ jobs:
               -DWITH_LUA=OFF
               -DWITH_OPENMP=OFF
               -DWITH_PLUGINS=OFF
+              -DWITH_PYBIND=OFF
               -DWITH_SRC=OFF
               -DWITH_TESTS=OFF
               -DWITH_TOOLS=OFF
@@ -89,6 +90,11 @@ jobs:
 
       - name: Build
         run: cmake --build build ${{ env.CMAKE_BUILD_OPTS }}
+
+      # WITH_PYBIND is silently disabled when pybind11 is missing
+      - name: Verify the Python bindings were built
+        if: matrix.distro == 'fedora'
+        run: test -f build/python/binding/_core*.so
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v7

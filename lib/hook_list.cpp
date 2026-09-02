@@ -189,6 +189,9 @@ void HookList::dump(Logger logger, std::string subject) const {
   logger->debug("Hooks of {}:", subject);
 
   unsigned i = 0;
-  for (auto h : *this)
-    logger->debug("      {}: {}", i++, h->getFactory()->getName());
+  for (auto h : *this) {
+    auto *f = h->getFactory();
+
+    logger->debug("      {}: {}", i++, f ? f->getName() : "unnamed");
+  }
 }

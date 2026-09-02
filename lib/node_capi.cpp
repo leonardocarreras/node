@@ -59,7 +59,7 @@ int node_restart(vnode *n) {
 
 int node_destroy(vnode *n) {
   auto *nc = (Node *)n;
-  nc->~Node();
+  delete nc;
   return 0;
 }
 

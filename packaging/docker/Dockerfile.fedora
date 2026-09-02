@@ -28,7 +28,7 @@ RUN dnf -y install \
 	openssh-clients \
 	jq nmap-ncat \
 	iproute iproute-tc \
-	python python-devel python-pip \
+	python python-devel python-pip pybind11-devel \
 	gdb gdb-gdbserver \
 	cppcheck \
 	xmlto dblatex rubygem-asciidoctor \
@@ -85,8 +85,9 @@ RUN bash /deps/deps.sh
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
 # Install Python dev tools for CI
-COPY ./python /python
-RUN pip install /python[dev] && \
+COPY ./pyproject.toml ./LICENSE /python/
+COPY ./python /python/python
+RUN pip install --config-settings=wheel.cmake=false "/python[dev]" && \
 	rm -r /python
 
 # Expose ports for HTTP and WebSocket frontend

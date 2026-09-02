@@ -1,0 +1,51 @@
+# Base image for building VILLASnode Python wheels with cibuildwheel
+#
+# SPDX-FileCopyrightText: 2014-2023 Institute for Automation of Complex Power Systems, RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
+
+FROM quay.io/pypa/manylinux_2_28_x86_64
+
+LABEL \
+	org.opencontainers.image.title="VILLASnode manylinux" \
+	org.opencontainers.image.licenses="Apache-2.0" \
+	org.opencontainers.image.url="http://fein-aachen.org/projects/villas-framework/" \
+	org.opencontainers.image.source="https://github.com/VILLASframework/node"
+
+RUN dnf -y install epel-release && \
+	dnf -y install \
+	autoconf \
+	automake \
+	bison \
+	flex \
+	git \
+	graphviz-devel \
+	jansson-devel \
+	libconfig-devel \
+	libcurl-devel \
+	libibverbs-devel \
+	libmodbus-devel \
+	libnice-devel \
+	libnl3-devel \
+	librdkafka-devel \
+	librdmacm-devel \
+	libtool \
+	libusb-devel \
+	libuuid-devel \
+	lua-devel \
+	make \
+	mosquitto-devel \
+	nanomsg-devel \
+	openssl-devel \
+	patch \
+	pkgconfig \
+	protobuf-c-devel \
+	protobuf-devel \
+	subversion \
+	wget \
+	zeromq-devel
+
+ADD packaging/patches /deps/patches
+ADD packaging/deps.sh /deps
+RUN DEPS_NONINTERACTIVE=1 \
+	DEPS_SKIP=criterion \
+	bash /deps/deps.sh
