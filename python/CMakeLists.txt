@@ -20,3 +20,7 @@ if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
             villas_pb2.py
     )
 endif()
+
+if(WITH_PYBIND)
+    add_subdirectory(binding)
+endif()
