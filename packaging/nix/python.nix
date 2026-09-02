@@ -4,17 +4,24 @@
   src,
   pkgs,
   python3Packages,
+  villas,
 }:
 python3Packages.buildPythonPackage {
   name = "villas-node";
-  src = "${src}/python";
+  inherit src;
   format = "pyproject";
+  dontUseCmakeConfigure = true;
+  nativeBuildInputs = villas.nativeBuildInputs ++ [ python3Packages.pybind11 ];
+  buildInputs = villas.buildInputs;
   propagatedBuildInputs = with python3Packages; [
     linuxfd
     requests
     protobuf
   ];
-  build-system = with python3Packages; [ setuptools ];
+  build-system = with python3Packages; [
+    scikit-build-core
+    pybind11
+  ];
   nativeCheckInputs = with python3Packages; [
     black
     flake8
@@ -28,6 +35,6 @@ python3Packages.buildPythonPackage {
   ];
 
   postPatch = ''
-    ${pkgs.protobuf}/bin/protoc --proto_path ${src}/lib/formats --mypy_out=villas/node --python_out=villas/node/ ${src}/lib/formats/villas.proto
+    ${pkgs.protobuf}/bin/protoc --proto_path ${src}/lib/formats --mypy_out=python/villas/node --python_out=python/villas/node/ ${src}/lib/formats/villas.proto
   '';
 }
